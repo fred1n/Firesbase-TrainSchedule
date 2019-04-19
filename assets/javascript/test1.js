@@ -1,46 +1,51 @@
+////////////////////////////////////////////////////////
+////////////////////  TRAIN        ////////////////////
+///////////////////      SCHEDULE ////////////////////
+/////////////////////////////////////////////////////
+
 // Global Variables
 var trainName = '';
 var trainDestination = '';
-var trainTime = 0;
-var trainFrequency = 0;
-var nextArrival = 0;
-var minutesAway = 0;
+var trainTime = '';
+var trainFrequency = '';
+var trainNextArrival = '';
+var trainMinutesAway = '';
 
 // jQuery global variables
-var inTrain = $('#train-name');
-var inTrainDestination = $('#train-destination');
+var inValTrain = $('#train-name');
+var inValTrainDestination = $('#train-destination');
 // form validation for Time using jQuery Mask plugin
-var inTrainTime = $('#train-time').mask('00:00');
-var inTimeFreq = $('#time-freq').mask('00');
+var inValTrainTime = $('#train-time').mask('00:00');
+var inFrequency = $('#time-freq').mask('00');
 
 // Initialize Firebase
 var config = {
-	apiKey: 'AIzaSyAAJbTKziqgyPDRpFa4-hsa2zHvuOrUz54',
-	authDomain: 'ftrain-1200b.firebaseapp.com',
-	databaseURL: 'https://ftrain-1200b.firebaseio.com',
-	projectId: 'ftrain-1200b',
-	storageBucket: 'ftrain-1200b.appspot.com',
-	messagingSenderId: '1070787120169'
+	apiKey: 'AIzaSyDRc8WHqEiPmt5eZgB_HxRygGA31dqHKPg',
+	authDomain: 'train-schedule-bd950.firebaseapp.com',
+	databaseURL: 'https://train-schedule-bd950.firebaseio.com',
+	projectId: 'train-schedule-bd950',
+	storageBucket: 'train-schedule-bd950.appspot.com',
+	messagingSenderId: '236709814864'
 };
 
 firebase.initializeApp(config);
 
-// Assign the reference
+// Assign the reference to the database to a variable named 'database'
 var database = firebase.database();
 
 database.ref('/trains').on('child_added', function(snapshot) {
 	//  create local variables to store the data from firebase
 	var trainDiff = 0;
 	var trainRemainder = 0;
-	var minutesTillArrival = 0;
-	var nextTrainTime = 0;
+	var minutesTillArrival = '';
+	var nextTrainTime = '';
 	var frequency = snapshot.val().frequency;
 
 	// compute the difference in time from 'now' and the first train using UNIX timestamp, store in var and convert to minutes
 	trainDiff = moment().diff(moment.unix(snapshot.val().time), 'minutes');
 
 	// get the remainder of time by using 'moderator' with the frequency & time difference, store in var
-	trainRemainder = trainDiff % parseInt(frequency);
+	trainRemainder = trainDiff % frequency;
 
 	// subtract the remainder from the frequency, store in var
 	minutesTillArrival = frequency - trainRemainder;
@@ -70,26 +75,35 @@ database.ref('/trains').on('child_added', function(snapshot) {
 	);
 
 	$('span').hide();
-});
 
-// Delete ** not working **
-$('#table-data').on('click', 'tr span', function(snapshot) {
-	console.log(this);
-	var trainRef = database.ref('/trains/');
-	console.log(trainRef);
-	trainRef.child(key).remove();
+	// Hover view of delete button
+	$('tr').hover(
+		function() {
+			$(this).find('span').show();
+		},
+		function() {
+			$(this).find('span').hide();
+		}
+	);
+
+	// STARTED BONUS TO REMOVE ITEMS ** not finished **
+	$('#table-data').on('click', 'tr span', function() {
+		console.log(this);
+		var trainRef = database.ref('/trains/');
+		console.log(trainRef);
+	});
 });
 
 // function to call the button event, and store the values in the input form
-var storeData = function(event) {
+var storeInputs = function(event) {
 	// prevent from from reseting
 	event.preventDefault();
 
 	// get & store input values
-	trainName = inTrain.val().trim();
-	trainDestination = inTrainDestination.val().trim();
-	trainTime = moment(inTrainTime.val().trim(), 'HH:mm').subtract(1, 'years').format('X');
-	trainFrequency = inTimeFreq.val().trim();
+	trainName = inValTrain.val().trim();
+	trainDestination = inValTrainDestination.val().trim();
+	trainTime = moment(inValTrainTime.val().trim(), 'HH:mm').subtract(1, 'years').format('X');
+	trainFrequency = inFrequency.val().trim();
 
 	// add to firebase databse
 	database.ref('/trains').push({
@@ -97,51 +111,51 @@ var storeData = function(event) {
 		destination: trainDestination,
 		time: trainTime,
 		frequency: trainFrequency,
-		nextArrival: nextArrival,
-		minutesAway: minutesAway,
+		trainNextArrival: trainNextArrival,
+		trainMinutesAway: trainMinutesAway,
 		date_added: firebase.database.ServerValue.TIMESTAMP
 	});
 
 	//  alert that train was added
-	alert('Train schedule entry added!');
+	alert('Train successuflly added!');
 
 	//  empty form once submitted
-	inTrain.val('');
-	inTrainDestination.val('');
-	inTrainTime.val('');
-	inTimeFreq.val('');
+	inValTrain.val('');
+	inValTrainDestination.val('');
+	inValTrainTime.val('');
+	inFrequency.val('');
 };
 
-// Calls storeData function if submit button clicked
+// Calls storeInputs function if submit button clicked
 $('#btn-add').on('click', function(event) {
 	// form validation - if empty - alert
 	if (
-		inTrain.val().length === 0 ||
-		inTrainDestination.val().length === 0 ||
-		inTrainTime.val().length === 0 ||
-		inTimeFreq === 0
+		inValTrain.val().length === 0 ||
+		inValTrainDestination.val().length === 0 ||
+		inValTrainTime.val().length === 0 ||
+		inFrequency === 0
 	) {
 		alert('Please Fill All Required Fields');
 	} else {
 		// if form is filled out, run function
-		storeData(event);
+		storeInputs(event);
 	}
 });
 
-// Calls storeData function if enter key is clicked
+// Calls storeInputs function if enter key is clicked
 $('form').on('keypress', function(event) {
 	if (event.which === 13) {
 		// form validation - if empty - alert
 		if (
-			inTrain.val().length === 0 ||
-			inTrainDestination.val().length === 0 ||
-			inTrainTime.val().length === 0 ||
-			inTimeFreq === 0
+			inValTrain.val().length === 0 ||
+			inValTrainDestination.val().length === 0 ||
+			inValTrainTime.val().length === 0 ||
+			inFrequency === 0
 		) {
-			alert('Please enter data in all Fields');
+			alert('Please Fill All Required Fields');
 		} else {
 			// if form is filled out, run function
-			storeData(event);
+			storeInputs(event);
 		}
 	}
 });
